@@ -22,10 +22,13 @@ SRCS += $(dir)/malloc/cl_l1_malloc.c
 SRCS += $(dir)/malloc/malloc_internal.c
 CV_CPPFLAGS += -I"$(FREERTOS_PROJ_ROOT)/$(dir)/malloc/include"
 endif
+CV_CPPFLAGS += -DSTDIO_UARTCHS=3
 CV_CPPFLAGS += -DSTDIO_FAKE=2
 CV_CPPFLAGS += -DSTDIO_UART=1
 CV_CPPFLAGS += -DSTDIO_NULL=0
-ifeq ($(CONFIG_STDIO),fake)
+ifeq ($(CONFIG_STDIO),uartchs)
+CV_CPPFLAGS += -DCONFIG_STDIO=3
+else ifeq ($(CONFIG_STDIO),fake)
 CV_CPPFLAGS += -DCONFIG_STDIO=2
 else ifeq ($(CONFIG_STDIO),uart)
 CV_CPPFLAGS += -DCONFIG_STDIO=1

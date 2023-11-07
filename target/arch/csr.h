@@ -41,6 +41,7 @@
 #define CSR_MHARTID  0xf14
 #define CSR_MINTSTATUS 0x346
 #define CSR_MINTTHRESH 0x347
+#define CSR_MNXTICFG   0xBD0
 
 /* TODO: complete this */
 #define MSTATUS_IE BIT(3)

@@ -19,11 +19,7 @@ SRCS += $(dir)/crt0.S
 ifeq ($(CONFIG_FREERTOS_KERNEL),y)
 SRCS += $(dir)/system.c
 SRCS += $(dir)/vectors.S
-ifeq ($(CONFIG_CLUSTER),y)
-SRCS += $(dir)/cluster.S
-endif
 else
-SRCS += $(dir)/system_metal.c
 SRCS += $(dir)/vectors_metal.S
 endif
 
@@ -31,6 +27,8 @@ CV_CPPFLAGS += -I$(FREERTOS_PROJ_ROOT)/$(dir)/include
 
 ifeq ($(CONFIG_DRIVER_INT),clic)
 CV_LDFLAGS += -T$(FREERTOS_PROJ_ROOT)/$(dir)/link_clic.ld
-else
+else ifeq ($(CONFIG_DRIVER_INT),clic2)
+CV_LDFLAGS += -T$(FREERTOS_PROJ_ROOT)/$(dir)/link_clic.ld
+else 
 CV_LDFLAGS += -T$(FREERTOS_PROJ_ROOT)/$(dir)/link.ld
 endif

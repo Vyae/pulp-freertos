@@ -25,15 +25,15 @@
 #include <FreeRTOS.h>
 #include "FreeRTOSConfig.h"
 
-#include "cluster/cl_to_fc_delegate.h"
-#include "fc_event.h"
 #include "freq.h"
-#include "properties.h"
-#include "irq.h"
-#include "soc_eu.h"
-#include "udma_ctrl.h"
-#include "udma_uart.h"
+#include "csr.h"
 #include "uart_periph.h"
+#include "clic2.h"
+#if CONFIG_STDIO == STDIO_UARTCHS
+#include "uart_chs.h"
+#endif
+#include "pulp_mem_map.h"
+
 
 /* test some assumptions we make about compiler settings */
 static_assert(sizeof(uintptr_t) == 4,
@@ -60,10 +60,14 @@ BaseType_t xTaskIncrementTick(void);
 void vTaskSwitchContext(void);
 
 /* interrupt handling */
-void cl_notify_fc_event_handler(void);
 void timer_irq_handler(void);
 void undefined_handler(void);
 void (*isr_table[ISR_TABLE_SIZE])(void);
+uint32_t irq_global_disable();
+uint32_t irq_global_enable();
+uint32_t irq_clint_disable(int id);
+uint32_t irq_clint_enable(int id);
+
 
 /**
  * Board init code. Always call this before anything else.
@@ -76,28 +80,15 @@ void system_init(void)
 	/* Hook up isr table. This table is temporary until we figure out how to
 	 * do proper vectored interrupts.
 	 */
-#ifdef CONFIG_CLUSTER
-	isr_table[0x2] = cl_notify_fc_event_handler;
-#endif
-	isr_table[0xa] = timer_irq_handler;
-	isr_table[0x1a] = fc_soc_event_handler; // 26
+	isr_table[IRQ_TIMER_LO] = timer_irq_handler;
 
 	/* mtvec is set in crt0.S */
 
-	/* deactivate all soc events as they are enabled by default */
-	soc_eu_event_init();
-
-	/* Setup soc events handler. */
-	/* pi_fc_event_handler_init(FC_SOC_EVENT); */
-	pi_fc_event_handler_init(26); /* TODO: FIX THIS */
-
 	/* TODO: I$ enable*/
 	/* enable global core level interrupts (MIE in mstatus) */
-	irq_clint_global_enable();
+	irq_global_enable();
 	/* enable timer interrupt also in the mie csr (required in the cv32e40p) */
-	irq_clint_enable(IRQ_FC_EVT_TIMER0_LO);
-	/* enable soc_events to propagate to core */
-	irq_clint_enable(IRQ_FC_EVT_SOC_EVT);
+	irq_clint_enable(IRQ_TIMER_LO);
 
 	/* enable uart as stdio*/
 #if CONFIG_STDIO == STDIO_UART
@@ -115,7 +106,12 @@ void system_init(void)
 	val |= REG_SET(UART_SETUP_POLLING_EN, 1);
 
 	uart_setup_set(UDMA_UART_ID(STDIO_UART_DEVICE_ID), val);
+
+#elif CONFIG_STDIO == STDIO_UARTCHS
+	uint64_t reset_freq = 100000000; // 100MHz
+    uart_init(PULP_STDOUT_ADDR, reset_freq, 115200);
 #endif
+
 }
 
 void system_core_clock_update(void)
@@ -158,11 +154,39 @@ void vPortSetupTimerInterrupt(void)
 	/* TODO: configKERNEL_INTERRUPT_PRIORITY - 1 ? */
 	timer_irq_init(ARCHI_REF_CLOCK / configTICK_RATE_HZ);
 	/* TODO: allow setting interrupt priority (to super high(?)) */
-	irq_enable(IRQ_FC_EVT_TIMER0_LO);
+	irq_enable(IRQ_TIMER_LO);
 }
 
 void vSystemIrqHandler(uint32_t mcause)
 {
 	extern void (*isr_table[ISR_TABLE_SIZE])(void);
 	isr_table[mcause & (ISR_TABLE_SIZE-1)]();
+}
+
+/* enable/disable interrupt globally (MIE bit in mstatus csr) */
+uint32_t irq_global_disable()
+{
+	uint32_t val = csr_read_clear(CSR_MSTATUS, MSTATUS_IE);
+	return val;
+}
+
+uint32_t irq_global_enable()
+{
+	uint32_t val = csr_read_set(CSR_MSTATUS, MSTATUS_IE);
+	return val;
+}
+
+/* enable/disable interrupts selectively (in mie csr) */
+uint32_t irq_clint_disable(int id)
+{
+	/* these appear hardwired to zero in clic mode */
+	uint32_t val = csr_read_clear(CSR_MIE, 1ul << id);
+	return val;
+}
+
+uint32_t irq_clint_enable(int id)
+{
+	/* these appear hardwired to zero in clic mode */
+	uint32_t val = csr_read_set(CSR_MIE, 1ul << id);
+	return val;
 }

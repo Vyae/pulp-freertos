@@ -21,7 +21,6 @@
 #ifndef __TARGET_H__
 #define __TARGET_H__
 
-#include "properties.h"
 #include "riscv.h"
 
 static inline void hal_compiler_barrier()
@@ -73,57 +72,5 @@ static inline uint8_t hal_read8(volatile void *addr)
 	return ret;
 }
 
-
-static inline uint32_t __native_core_id()
-{
-	/* encoding of mhartid: {21'b0, cluster_id_i[5:0], 1'b0, core_id_i[3:0]}
-	 */
-	uint32_t mhartid = csr_read(MHARTID_ADDR);
-	return mhartid & 0x01f;
-}
-
-static inline uint32_t __native_cluster_id()
-{
-	/* encoding of mhartid {21'b0, cluster_id_i[5:0], 1'b0, core_id_i[3:0]}
-	 */
-	uint32_t mhartid = csr_read(MHARTID_ADDR);
-	return (mhartid >> 5) & 0x3f;
-}
-
-static inline uint32_t __native_is_fc()
-{
-	return 1;
-}
-
-
-static inline uint32_t pi_core_id()
-{
-	return __native_core_id();
-}
-
-static inline uint32_t pi_cluster_id()
-{
-	return __native_cluster_id();
-}
-
-static inline uint32_t pi_is_fc()
-{
-	return __native_is_fc();
-}
-
-static inline uint32_t pi_nb_cluster_cores()
-{
-	return ARCHI_CLUSTER_NB_PE;
-}
-
-static inline int pi_cl_cluster_nb_cores()
-{
-	return ARCHI_CLUSTER_NB_PE;
-}
-
-static inline uint32_t pi_cl_cluster_nb_pe_cores(void)
-{
-	return ARCHI_CLUSTER_NB_PE;
-}
 
 #endif

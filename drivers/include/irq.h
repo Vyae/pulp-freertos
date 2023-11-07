@@ -26,7 +26,7 @@
 
 #include "io.h"
 #include "bits.h"
-#include "memory_map.h"
+#include "pulp_mem_map.h"
 #include "riscv.h"
 
 #define IRQ_REG_MASK_OFFSET	  0x000
@@ -192,56 +192,6 @@ typedef struct {
 #define IRQ_REG_ACK_SET_OFFSET	  0x01C
 #define IRQ_REG_ACK_CLEAR_OFFSET  0x020
 #define IRQ_REG_FIFO_OFFSET	  0x024
-
-/* Interrupt line masks: these interrupts directly go to the core (after being
- * serialized as reqest + id). We refer to these interrupts with the prefix IRQ.
- * Events on the other we strictly use to refer to "interrupts/events" that are
- * signaled through (muxed) EU SoC interrupts (IRQ_FC_EVT_SOC_EVT) and need
- * additional handling by the user through the Event Unit.
- */
-#define IRQ_FC_EVT_SW0	      (0)
-#define IRQ_FC_EVT_SW1	      (1)
-#define IRQ_FC_EVT_SW2	      (2)
-#define IRQ_FC_EVT_SW3	      (3)
-#define IRQ_FC_EVT_SW4	      (4)
-#define IRQ_FC_EVT_SW5	      (5)
-#define IRQ_FC_EVT_SW6	      (6)
-#define IRQ_FC_EVT_SW7	      (7)
-#define IRQ_FC_EVT_DMA_PE_EVT (8)
-#define IRQ_FC_EVT_DMA_PE_IRQ (9)
-#define IRQ_FC_EVT_TIMER0_LO  (10)
-#define IRQ_FC_EVT_TIMER0_HI  (11)
-#define IRQ_FC_EVT_PF	      (12)
-#define IRQ_FC_EVT_CLK_REF    (14)
-#define IRQ_FC_EVT_GPIO	      (15)
-/* doesn't exist in pulp */
-/*#define IRQ_FC_EVT_RTC		   16 */
-#define IRQ_FC_EVT_ADV_TIMER0 (17)
-#define IRQ_FC_EVT_ADV_TIMER1 (18)
-#define IRQ_FC_EVT_ADV_TIMER2 (19)
-#define IRQ_FC_EVT_ADV_TIMER3 (20)
-/* doesn't exist in pulp */
-/* #define IRQ_FC_EVT_CLUSTER_NOT_BUSY 21 */
-/* #define IRQ_FC_EVT_CLUSTER_POK	   22 */
-/* #define IRQ_FC_EVT_CLUSTER_CG_OK	   23 */
-/* #define IRQ_FC_EVT_PICL_OK     24 */
-/* #define IRQ_FC_EVT_SCU_OK      25 */
-/*
- * SoC event unit events: Many events get implicitely muxed into this interrupt.
- * A user that gets such an interrupt has to check the event unit's registers to
- * see what happened
- */
-#define IRQ_FC_EVT_SOC_EVT (26)
-/*
- * Event queue error: If we don't process event unit events quickly enough
- * internal fifos can overflow and we get this error interrupt
- */
-#define IRQ_FC_EVT_QUIRQE_ERROR (29)
-/* High priority peripheral events: these are hardcoded to directly go to the
- * core using a dedicated interrupt line
- */
-#define IRQ_FC_EVT_PERIPH0 (30)
-#define IRQ_FC_EVT_PERIPH1 (31)
 
 
 #define SIMPLE_IRQ                                                             \

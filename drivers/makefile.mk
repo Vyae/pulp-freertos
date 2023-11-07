@@ -15,7 +15,11 @@
 # SPDX-License-Identifier: Apache-2.0
 # Author: Robert Balas (balasr@iis.ee.ethz.ch)
 
+ifeq ($(CONFIG_STDIO),uartchs)
+SRCS += $(dir)/uart_chs.c
+else ifeq ($(CONFIG_STDIO),uart)
 SRCS += $(dir)/uart.c
+endif
 ifeq ($(CONFIG_UDMA_SPI),y)
 SRCS += $(dir)/spi.c
 endif
@@ -48,14 +52,25 @@ SRCS += $(dir)/pclint.c
 else ifeq ($(CONFIG_DRIVER_INT),clic)
 SRCS += $(dir)/clic.c
 CV_CPPFLAGS += -DCONFIG_CLIC
+else ifeq ($(CONFIG_DRIVER_INT),clic2)
+SRCS += $(dir)/clic2.c
+CV_CPPFLAGS += -DCONFIG_CLIC
 else
 $(error no driver for interrupt controller enabled. Set CONFIG_DRIVER_INT)
 endif
 
+ifeq ($(CONFIG_SOC_EU),y)
 SRCS += $(dir)/soc_eu.c
+endif
+ifeq ($(CONFIG_GPIO),y)
 SRCS += $(dir)/gpio.c
+endif
+ifeq ($(CONFIG_PINMUX),y)
 SRCS += $(dir)/pinmux.c
+endif
+ifeq ($(CONFIG_FC_EVENT),y)
 SRCS += $(dir)/fc_event.c
+endif
 
 SRCS += $(dir)/pmsis_task.c
 SRCS += $(dir)/device.c

@@ -157,13 +157,17 @@ See `env/default-config.sh`
   include directory
 * `CONFIG_USE_NEWLIB=y/n` (default y) Use newlib libc
 
-* `CONFIG_STDIO=fake/uart/null` (default fake) Send printf/read/write through
+* `CONFIG_STDIO=fake/uart/uartchs/null` (default fake) Send printf/read/write through
   testbench printf (fake), udma uart (uart) or ignore (null.
 * `CONFIG_DRIVER_PLIC=y/n` (default n) Use the PLIC driver
 * `CONFIG_DRIVER_FLL=y/n` (default y) Use the FLL driver
 * `CONFIG_DRIVER_CLKDIV=y/n` (default n) Use the clock divider driver (control-pulp)
 * `CONFIG_DRIVER_CLKCONST=y/n` (default n) Use the constant clock driver
-* `CONFIG_DRIVER_INT=pclint/clic` (default clint) Select the interrupt module
+* `CONFIG_DRIVER_INT=pclint/clic/clic2` (default clint) Select the interrupt module
+* `CONFIG_SOC_EU=y/n` (default n) Use Event Unit
+* `CONFIG_GPIO=y/n` (default n) Use GPIO
+* `CONFIG_PINMUX=y/n` (default n) Use Pinmux
+* `CONFIG_FC_EVENT=y/n` (default n) Use FC_event
 
 * `CONFIG_CC_LTO=y/n` (default n) Use link-time optimizations
 * `CONFIG_CC_SANITIZE=y/n` (default n) Use address sanitizers

@@ -48,7 +48,7 @@ int timer_irq_init(uint32_t ticks)
 	writew(TIMER_CFG_LO_ENABLE_MASK | TIMER_CFG_LO_RESET_MASK |
 		       TIMER_CFG_LO_CCFG_MASK | TIMER_CFG_LO_MODE_MASK |
 		       TIMER_CFG_LO_IRQEN_MASK,
-	       (uintptr_t)(PULP_FC_TIMER_ADDR + TIMER_CFG_LO_OFFSET));
+	       (uintptr_t)(PULP_TIMER_ADDR + TIMER_CFG_LO_OFFSET));
 
 	return 0;
 }
@@ -57,8 +57,8 @@ int timer_irq_set_timeout(uint32_t ticks, bool idle)
 {
 	(void)idle;
 	/* fast reset, value doesn't matter */
-	writew(1, (uintptr_t)(PULP_FC_TIMER_ADDR + TIMER_RESET_LO_OFFSET));
-	writew(ticks, (uintptr_t)(PULP_FC_TIMER_ADDR + TIMER_CMP_LO_OFFSET));
+	writew(1, (uintptr_t)(PULP_TIMER_ADDR + TIMER_RESET_LO_OFFSET));
+	writew(ticks, (uintptr_t)(PULP_TIMER_ADDR + TIMER_CMP_LO_OFFSET));
 	return 0;
 }
 
@@ -70,5 +70,5 @@ uint32_t timer_irq_clock_elapsed()
 
 uint32_t timer_irq_cycle_get_32()
 {
-	return readw((uintptr_t)(PULP_FC_TIMER_ADDR + TIMER_CNT_LO_OFFSET));
+	return readw((uintptr_t)(PULP_TIMER_ADDR + TIMER_CNT_LO_OFFSET));
 }

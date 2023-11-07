@@ -56,6 +56,8 @@
 #if CONFIG_STDIO == STDIO_UART
 #include "udma.h"
 #include "udma_uart.h"
+#elif CONFIG_STDIO == STDIO_UARTCHS
+#include "uart_chs.h"
 #endif
 
 /* FreeRTOS */
@@ -152,8 +154,10 @@ void _exit(int exit_status)
 	for (volatile int i = 0; i < 1024 * 3; i++)
 	    ;
 #endif
+#if CONFIG_PINMUX == 'y'
 	writew((uint32_t)exit_status | (1ul << APB_SOC_STATUS_EOC_BIT),
 	       (uintptr_t)(PULP_APB_SOC_CTRL_ADDR + APB_SOC_CORESTATUS_OFFSET));
+#endif
 	for (;;)
 	    asm volatile("wfi");
 }
@@ -344,6 +348,9 @@ ssize_t _write(int file, const void *ptr, size_t len)
 	 * writing to uart */
 
 	return len < STDIO_UART_BUFSIZE ? len : STDIO_UART_BUFSIZE;
+#elif CONFIG_STDIO == STDIO_UARTCHS
+	uart_write_str(PULP_STDOUT_ADDR, ptr, len);
+	uart_write_flush(PULP_STDOUT_ADDR);
 #elif CONFIG_STDIO == STDIO_NULL
 	/* just nop */
 	return len;

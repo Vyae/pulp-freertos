@@ -21,16 +21,14 @@ OUTPUT_ARCH(riscv)
 ENTRY(_start)
 MEMORY
 {
-  L2           : ORIGIN = 0x1c000004, LENGTH = 0x0007fffc
-  L2_aliased   : ORIGIN = 0x00000004, LENGTH = 0x00003ffc
-  L1           : ORIGIN = 0x10000004, LENGTH = 0x0000fffc
-  L1_aliased   : ORIGIN = 0x00000004, LENGTH = 0x0000fffc
+  SRAM           : ORIGIN = 0x60000000, LENGTH = 0x00020000
 }
 
 /*
- * This linker script try to put FC data in L2 private bank0 and FC code
- * in L2 private bank1 to avoid contention between FC code and data
- * as FC has no instruction cache and is so often accessing L2 to
+ * TODO: fix this
+ * This linker script try to put FC data in SRAM private bank0 and FC code
+ * in SRAM private bank1 to avoid contention between FC code and data
+ * as FC has no instruction cache and is so often accessing SRAM to
  * get instructions. Everything can be shifted in case one bank is full.
  *
  * Cluster code and initialized data are put in shared banks to not polute
@@ -42,7 +40,7 @@ MEMORY
 SECTIONS
 {
 
-  PROVIDE(__boot_address = 0x1c000880);
+  PROVIDE(__boot_address = 0x60010080);
   /* stack and heap related settings */
   __stack_size = DEFINED(__stack_size) ? __stack_size : 0x800;
   PROVIDE(__stack_size = __stack_size);
@@ -50,41 +48,23 @@ SECTIONS
   PROVIDE(__heap_size = __heap_size);
 
   /*
-   * L2 PRIVATE BANK0
+   * SRAM PRIVATE BANK0
    *
-   * Contains FC tiny data and code
+   * Contains code
    */
-
-  /* This section is for tiny FC data which benefits
-   * from the alias at 0
-   */
-   /* TODO: what do we really want to put here when we have the gp */
-  .data_tiny_fc : ALIGN(4)
-  {
-    . = ALIGN(16);
-    *(.data_tiny_fc)
-    *(.data_tiny_fc.*)
-    . = ALIGN(16);
-    __l1FcShared_start = .;
-    *(.l1FcTiny)
-    *(.l1FcTiny.*)
-    __l1FcShared_end = .;
-  } > L2_aliased AT> L2
-
-  __l1FcShared_size = __l1FcShared_end - __l1FcShared_start;
 
   /* text */
   .init : ALIGN(4)
   {
     KEEP( *(.init) )
-  } > L2
+  } > SRAM
 
-  .vectors MAX(0x1c000400, ALIGN(1024)) : /* lets leave the first 1k free for now "quarter zero page" */
+  .vectors MAX(0x60000400, ALIGN(1024)) : /* lets leave the first 1k free for now "quarter zero page" */
   {
     __irq_vector_base = .;
     __vector_start = .;
     KEEP(*(.vectors))
-  } > L2
+  } > SRAM
 
   .text __boot_address :
   {
@@ -97,19 +77,19 @@ SECTIONS
     *(.shdata)
     _endtext = .;
     . = ALIGN(4);
-  } > L2
+  } > SRAM
 
   .fini : ALIGN(4)
   {
     KEEP( *(.fini) )
-  } > L2
+  } > SRAM
 
 
-  __l2_priv0_end = ALIGN(4);
+  __SRAM_priv0_end = ALIGN(4);
 
 
   /*
-   * L2 PRIVATE BANK1
+   * SRAM PRIVATE BANK1
    *
    * Contains FC data
    */
@@ -117,68 +97,68 @@ SECTIONS
 
   /* make sure we start filling fc data into the correct bank */
   /* read-only sections */
-  .rodata MAX(0x1c008000, ALIGN(4)) :
+  .rodata MAX(0x60008000, ALIGN(4)) :
   {
     *(.rodata .rodata.* .gnu.linkonce.r.*)
-  } > L2
+  } > SRAM
   .rodata1        :
   {
     *(.rodata1)
-  } > L2
+  } > SRAM
 
 
   .boot : ALIGN(4)
   {
     *(.boot)
     *(.boot.data)
-  } > L2
+  } > SRAM
 
   /* .got : ALIGN(4) */
   /* { */
   /*   *(.got.plt) * (.igot.plt) *(.got) *(.igot) */
-  /* } > L2 */
+  /* } > SRAM */
 
   .talias :
   {
-  } > L2
+  } > SRAM
 
 
   /* gcc language agnostic exception related sections (try-catch-finally) */
   .eh_frame_hdr :
   {
     *(.eh_frame_hdr) *(.eh_frame_entry .eh_frame_entry.*)
-  } > L2
+  } > SRAM
   .eh_frame       : ONLY_IF_RO
   {
     KEEP (*(.eh_frame)) *(.eh_frame.*)
-  } > L2
+  } > SRAM
   .gcc_except_table   : ONLY_IF_RO
   {
     *(.gcc_except_table .gcc_except_table.*)
-  } > L2
+  } > SRAM
   .gnu_extab   : ONLY_IF_RO
   {
     *(.gnu_extab*)
-  } > L2
+  } > SRAM
 
 
   /* Exception handling  */
   .eh_frame       : ONLY_IF_RW
   {
     KEEP (*(.eh_frame)) *(.eh_frame.*)
-  } > L2
+  } > SRAM
   .gnu_extab      : ONLY_IF_RW
   {
     *(.gnu_extab)
-  } > L2
+  } > SRAM
   .gcc_except_table   : ONLY_IF_RW
   {
     *(.gcc_except_table .gcc_except_table.*)
-  } > L2
+  } > SRAM
   .exception_ranges   : ONLY_IF_RW
   {
     *(.exception_ranges .exception_ranges*)
-  } > L2
+  } > SRAM
 
 
   /* Thread Local Storage sections  */
@@ -186,11 +166,11 @@ SECTIONS
   {
     PROVIDE_HIDDEN (__tdata_start = .);
     *(.tdata .tdata.* .gnu.linkonce.td.*)
-  } > L2
+  } > SRAM
   .tbss		  :
   {
     *(.tbss .tbss.* .gnu.linkonce.tb.*) *(.tcommon)
-  } > L2
+  } > SRAM
 
 
   /* constructors / destructors */
@@ -199,7 +179,7 @@ SECTIONS
     PROVIDE_HIDDEN (__preinit_array_start = .);
     KEEP (*(.preinit_array))
     PROVIDE_HIDDEN (__preinit_array_end = .);
-  } > L2
+  } > SRAM
 
   .init_array : ALIGN(4)
   {
@@ -207,7 +187,7 @@ SECTIONS
     KEEP (*(SORT_BY_INIT_PRIORITY(.init_array.*) SORT_BY_INIT_PRIORITY(.ctors.*)))
     KEEP (*(.init_array EXCLUDE_FILE (*crtbegin.o *crtbegin?.o *crtend.o *crtend?.o ) .ctors))
     PROVIDE_HIDDEN (__init_array_end = .);
-  } > L2
+  } > SRAM
 
   .fini_array : ALIGN(4)
   {
@@ -215,7 +195,7 @@ SECTIONS
     KEEP (*(SORT_BY_INIT_PRIORITY(.fini_array.*) SORT_BY_INIT_PRIORITY(.dtors.*)))
     KEEP (*(.fini_array EXCLUDE_FILE (*crtbegin.o *crtbegin?.o *crtend.o *crtend?.o ) .dtors))
     PROVIDE_HIDDEN (__fini_array_end = .);
-  } > L2
+  } > SRAM
 
   .ctors          :
   {
@@ -237,7 +217,7 @@ SECTIONS
     KEEP (*(EXCLUDE_FILE (*crtend.o *crtend?.o ) .ctors))
     KEEP (*(SORT(.ctors.*)))
     KEEP (*(.ctors))
-  } > L2
+  } > SRAM
 
   .dtors          :
   {
@@ -246,20 +226,20 @@ SECTIONS
     KEEP (*(EXCLUDE_FILE (*crtend.o *crtend?.o ) .dtors))
     KEEP (*(SORT(.dtors.*)))
     KEEP (*(.dtors))
-  } > L2
+  } > SRAM
 
 
   /* Open MP */
   .gnu.offload_funcs : ALIGN(4)
   {
     KEEP(*(.gnu.offload_funcs))
-  } > L2
+  } > SRAM
 
 
   .gnu.offload_vars : ALIGN(4)
   {
     KEEP(*(.gnu.offload_vars))
-  } > L2
+  } > SRAM
 
 
   .data : ALIGN(4)
@@ -283,7 +263,7 @@ SECTIONS
     . = ALIGN(4);
     edata  =  .;
     _edata  =  .; /* man 3 end: first addr after data */
-  } > L2
+  } > SRAM
 
 
   .bss : ALIGN(8)
@@ -300,7 +280,7 @@ SECTIONS
     __bss_end = .;
     _bss_end = .;
     _end = .; /* man 3 end: first addr after bss */
-  } > L2
+  } > SRAM
 
 
   /* The compiler uses this to access data in the .sdata, .data, .sbss and .bss
@@ -316,7 +296,7 @@ SECTIONS
     /* . = ALIGN(16); */
     KEEP(*(.heap))
     __heap_end = .;
-  } > L2
+  } > SRAM
 
 
   .stack : ALIGN(16)
@@ -327,97 +307,30 @@ SECTIONS
     __stack_top = .;
     __freertos_irq_stack_top = .; /* sytem stack */
     stack = .;
-  } > L2
+  } > SRAM
 
 
-  __l2_priv1_end = ALIGN(4);
+  __SRAM_priv1_end = ALIGN(4);
 
 
   /*
-   * L2 SHARED BANKS
+   * SRAM SHARED BANKS
    *
    * Contains other data such as peripheral data and cluster code and data
    */
 
-  .l2_data MAX(0x1c010000, ALIGN(8)) :
+  .SRAM_data ALIGN(8) :
   {
     __cluster_text_start = .;
     *(.cluster.text)
     *(.cluster.text.*)
     . = ALIGN(4);
     __cluster_text_end = .;
-    *(.l2_data)
-    *(.l2_data.*)
+    *(.SRAM_data)
+    *(.SRAM_data.*)
     *(.data_fc_shared)
     *(.data_fc_shared.*)
     . = ALIGN(4);
-  } > L2
+  } > SRAM
 
-    /*
-     * Following sections are keeping the cluster data
-     * in L2 until the cluster is powered up.
-     */
-  __l1_preload_start_inL2 = .;
-
-  .data_tiny_l1 (ORIGIN(L1)) :
-  {
-    . = ALIGN(16);
-    __l1_preload_start = .;
-    *(.data_tiny_l1)
-    *(.data_tiny_l1.*)
-    *(.data_alias_l1)
-    *(.data_alias_l1.*)
-    *(.l1clusterTiny)
-    *(.l1clusterTiny.*)
-    . = ALIGN(16);
-    __data_tiny_l1_end = .;
-  } > L1 AT> L2
-
-  .l1cluster_g (__data_tiny_l1_end):
-  {
-    . = ALIGN(16);
-    __printf_lock_ptr_l1 = .;
-    . = __printf_lock_ptr_l1 + 0x4;
-    *(.l1cluster_g)
-    *(.l1cluster_g.*)
-    *(.data_l1)
-    *(.data_l1.*)
-    . = ALIGN(16);
-    __l1_cluster_g_end = .;
-  } > L1 AT> L2
-
-  .heap_l1_cluster (__l1_cluster_g_end):
-  {
-    . = ALIGN(16);
-    *(.heap_l1_cluster)
-    *(.heap_l1_cluster.*)
-    *(.heapsram)
-    *(.heapsram.*)
-     . = ALIGN(16);
-    __heap_l1_cluster_start = .;
-    __heapsram_start = .;
-    __l1_heapsram_start = .;
-  } > L1
-
-  /* L1 heap size. */
-  __heapsram_size = ORIGIN(L1) + LENGTH(L1) - __heapsram_start;
-  __l1_heapsram_size = ORIGIN(L1) + LENGTH(L1) - __l1_heapsram_start;
-  __heap_l1_cluster_size = ORIGIN(L1) + LENGTH(L1) - __heap_l1_cluster_start;
-  __l1_preload_size = SIZEOF(.data_tiny_l1) + SIZEOF(.l1cluster_g);
-
-  .heap_l2_shared (__l1_preload_start_inL2 + __l1_preload_size) :
-  {
-    . = ALIGN(16);
-    *(.heapl2ram)
-    *(.heapl2ram.*)
-    *(.heap_l2_shared)
-    *(.heap_l2_shared.*)
-    . = ALIGN(16);
-    __heapl2ram_start = .;
-    __heap_l2_shared_start = .;
-  } > L2
-
-  /* L2 heap size. */
-  __heapl2ram_size = ORIGIN(L2) + LENGTH(L2) - __heapl2ram_start;
-  __heap_l2_shared_size = ORIGIN(L2) + LENGTH(L2) - __heap_l2_shared_start;
 }
