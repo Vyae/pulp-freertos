@@ -398,3 +398,41 @@ void __malloc_unlock(struct _reent *p)
 	(void)xTaskResumeAll();
 #endif
 }
+
+void *malloc(size_t nbytes)
+{
+	return pvPortMalloc(nbytes);
+}
+
+void free(void *aptr)
+{
+	vPortFree(aptr);
+}
+
+// Also define the internally used functions for newlib
+
+void *_malloc_r(void *r, size_t nbytes)
+{
+	(void)r;
+	return pvPortMalloc(nbytes);
+}
+
+void _free_r(void *r, void *aptr)
+{
+	(void)r;
+	vPortFree(aptr);
+}
+
+void *_realloc_r(void *r, void *aptr, size_t nbytes)
+{
+	(void)r;
+	return pvPortRealloc(aptr, nbytes);
+}
+
+void *_calloc_r(void *r, size_t size, size_t len)
+{
+	(void)r;
+	void *buf = pvPortMalloc(size*len);
+	memset(buf, 0, size*len);
+	return buf;
+}

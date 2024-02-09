@@ -39,19 +39,19 @@
 static_assert(sizeof(uintptr_t) == 4,
 	      "uintptr_t is not 4 bytes. Make sure you are using -mabi=ilp32*");
 
-/* Allocate heap to special section. Note that we have no references in the
- * whole program to this variable (since its just here to allocate space in the
- * section for our heap), so when using LTO it will be removed. We force it to
- * stay with the "used" attribute
- */
+// /* Allocate heap to special section. Note that we have no references in the
+//  * whole program to this variable (since its just here to allocate space in the
+//  * section for our heap), so when using LTO it will be removed. We force it to
+//  * stay with the "used" attribute
+//  */
 __attribute__((section(".heap"), used)) uint8_t ucHeap[configTOTAL_HEAP_SIZE];
 
-/* Inform linker script about .heap section size. Note: GNU ld seems to
- * internally represent integers with the bfd_vma type, that is a type that can
- * contain memory addresses (typdefd to some int type depending on the
- * architecture). uint32_t seems to me the most fitting candidate for rv32.
- */
-uint32_t __heap_size = configTOTAL_HEAP_SIZE;
+// /* Inform linker script about .heap section size. Note: GNU ld seems to
+//  * internally represent integers with the bfd_vma type, that is a type that can
+//  * contain memory addresses (typdefd to some int type depending on the
+//  * architecture). uint32_t seems to me the most fitting candidate for rv32.
+//  */
+// uint32_t __heap_size = configTOTAL_HEAP_SIZE;
 
 volatile uint32_t system_core_clock = DEFAULT_SYSTEM_CLOCK;
 
@@ -86,9 +86,9 @@ void system_init(void)
 
 	/* TODO: I$ enable*/
 	/* enable global core level interrupts (MIE in mstatus) */
-	irq_global_enable();
+	//irq_global_enable();
 	/* enable timer interrupt also in the mie csr (required in the cv32e40p) */
-	irq_clint_enable(IRQ_TIMER_LO);
+	//irq_clint_enable(IRQ_TIMER_LO);
 
 	/* enable uart as stdio*/
 #if CONFIG_STDIO == STDIO_UART
@@ -108,8 +108,8 @@ void system_init(void)
 	uart_setup_set(UDMA_UART_ID(STDIO_UART_DEVICE_ID), val);
 
 #elif CONFIG_STDIO == STDIO_UARTCHS
-	uint64_t reset_freq = 100000000; // 100MHz
-    uart_init(PULP_STDOUT_ADDR, reset_freq, 115200);
+	//uint64_t reset_freq = 50000000; // 100MHz
+    //uart_init(PULP_STDOUT_ADDR, reset_freq, 38400);
 #endif
 
 }
@@ -152,7 +152,7 @@ void vPortSetupTimerInterrupt(void)
 
 	/* No CLINT so use the PULP timer to generate the tick interrupt. */
 	/* TODO: configKERNEL_INTERRUPT_PRIORITY - 1 ? */
-	timer_irq_init(ARCHI_REF_CLOCK / configTICK_RATE_HZ);
+	timer_irq_init(1000000 / configTICK_RATE_HZ);
 	/* TODO: allow setting interrupt priority (to super high(?)) */
 	irq_enable(IRQ_TIMER_LO);
 }

@@ -32,7 +32,7 @@ SRCS += $(dir)/timers.c
 SRCS += $(dir)/portable/GCC/RISC-V/port.c
 SRCS += $(dir)/portable/GCC/RISC-V/portASM.S
 # memory managment
-SRCS += $(dir)/portable/MemMang/heap_3.c
+SRCS += $(dir)/portable/MemMang/heap_4.c
 # freertos macro
 CV_CPPFLAGS += -DCONFIG_FREERTOS_KERNEL
 # freertos generic headers

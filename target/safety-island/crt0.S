@@ -27,6 +27,8 @@
  * http://www.opensource.org/licenses.
  */
 
+.extern vector_table
+
 /* entry point */
 .section .text.start
 .global _start
@@ -54,7 +56,7 @@ _start:
 	la sp, __stack_top
 
 /* set vector table address */
-	la a0, __vector_start
+	la a0, vector_table
 	or a0, a0, 1 /* enable vectored mode (hardcoded anyway for RI5CY) */
 	csrw mtvec, a0
 #ifdef CONFIG_CLIC

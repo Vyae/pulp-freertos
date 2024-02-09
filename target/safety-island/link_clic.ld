@@ -310,12 +310,7 @@ SECTIONS
   } > SRAM
 
 
-  __SRAM_priv1_end = ALIGN(4);
-
-
   /*
-   * SRAM SHARED BANKS
-   *
    * Contains other data such as peripheral data and cluster code and data
    */
 
@@ -332,5 +327,7 @@ SECTIONS
     *(.data_fc_shared.*)
     . = ALIGN(4);
   } > SRAM
+
+  __SRAM_priv1_end = ALIGN(4);
 
 }

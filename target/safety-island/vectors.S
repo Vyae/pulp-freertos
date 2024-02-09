@@ -25,6 +25,8 @@
 .extern TIMER1_IRQ_handler
 #endif
 
+.global vector_table
+
 #ifdef CONFIG_CLIC
 /* clic specific vector table */
 .section .vectors, "ax"
